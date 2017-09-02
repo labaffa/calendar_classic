@@ -5,7 +5,8 @@ from settings.config import (calendar_button_conf, header_conf,
                              today_conf, weekdays_conf, month_year_conf,
                              table_conf, date_box_conf,
                              weekday_labels_conf)
-from utils.checkers import is_today, get_row, get_column
+from utils.checkers import (is_today, get_row, get_column,
+                            proportion_to_screen_string)
 try:
     import Tkinter as tk
     import tkFont
@@ -294,3 +295,6 @@ class Home_screen(tk.Tk):
         screen.grid(row=0, column=0, sticky='news')
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
+        self.minsize(350, 500)
+        default_size = proportion_to_screen_string(self, 3, 2)
+        self.geometry(default_size)
