@@ -6,7 +6,8 @@ from settings.config import (calendar_button_conf, header_conf,
                              table_conf, date_box_conf,
                              weekday_labels_conf)
 from utils.checkers import (is_today, get_row, get_column,
-                            proportion_to_screen_string)
+                            proportion_to_screen_string,
+                            proportion_to_screen_size)
 try:
     import Tkinter as tk
     import tkFont
@@ -97,16 +98,19 @@ class Header(tk.Frame):
 
     def set_month_year_width(self):
         """Set Month_year width by the longest month-string"""
-        # Frame and label where to measure month widths
+        # Frame and label to use as width testers
         frame = tk.Frame(self)
         label = tk.Label(frame)
+        # Simulate appearence of the displayed month_year (important)
         label.configure(month_year_conf)
         label.grid(row=0)
         max_width = 0
         # Find the longest 'year and month' in the given locale
         for month in range(1, 13):
+            # Different months
             header = self.calendar.formatmonthname(2000, month, 0)
             label.configure(text=header.title())
+            # Retrieve widget width info
             label.update_idletasks()  # dont know why but it's crucial
             width = label.winfo_width()
             if width > max_width:
@@ -137,17 +141,23 @@ class Weekday_names(tk.Frame):
     def __init__(self, master=None, **kw):
         self.calendar = kw.pop('calendar', calendar.LocaleTextCalendar())
         tk.Frame.__init__(self, master, **kw)
+        # General frame config and build
         self.configure(weekdays_conf)
         self.build()
 
     def build(self):
+        """Create, set size and place labels with weekday names in them"""
         weekdays = self.calendar.formatweekheader(3).split()
+        # Loop over the seven weekdays
         for col, weekday in enumerate(weekdays):
+            # Create and configure the label
             weekday_label = tk.Label(self, text=weekday)
             weekday_label.configure(weekday_labels_conf, anchor='center')
+            # A column for every weekday
+            weekday_label.grid(row=0, column=col, sticky='news')
+            # Strechable, same-sized labels
             self.columnconfigure(col, weight=1)
             self.rowconfigure(0, weight=1)
-            weekday_label.grid(row=0, column=col, sticky='news')
 
 
 class Dates_table(tk.Frame):
@@ -162,8 +172,10 @@ class Dates_table(tk.Frame):
         # Number of rows and columns of the table
         self.no_rows = 6
         self.no_cols = 7
+        # Create boxes to fill with day numbers
         self.date_boxes = [tk.Label(self)
                            for _ in range(self.no_rows*self.no_cols)]
+        # General frame configuration and display
         self.configure(table_conf)
         self.first_display()
 
@@ -175,12 +187,15 @@ class Dates_table(tk.Frame):
 
     def label_config(self, label, label_date):
         """Set the style of the label based on its associated date"""
+        # Can be a day of the displayed month...
         if self.this_month_date(label_date):
+            # (in particular today)
             if is_today(label_date):
                 label.configure(today_conf)
                 return
             label.configure(this_month_conf)
             return
+        # ...or a day of the previous or next months of the displayed
         label.configure(other_month_conf)
         return
 
@@ -216,9 +231,11 @@ class Dates_table(tk.Frame):
 
     def update(self):
         """Same of first_display but without placing labels"""
+        # Define variables
         year = self.first_of_month.year
         month = self.first_of_month.month
         weekday_of_first, no_of_days = calendar.monthrange(year, month)
+        # Overwrite dates and box colors
         for i, date_box in enumerate(self.date_boxes):
             shift = i - weekday_of_first
             current_date = self.first_of_month + timedelta(shift)
@@ -243,17 +260,20 @@ class Calendar_classic(tk.Frame):
         self.table = Dates_table(self,
                                  calendar=self.calendar,
                                  day=self.first_of_month)
+        # Build and bind action to buttons
         self.build()
         self.bind_widgets()
 
     def build(self):
         """Grid and set dimensions of widgets"""
+        # Place widgets
         self.header.grid(row=0, column=0, sticky='news')
         self.weekdays.grid(row=1, column=0, sticky='news')
         self.table.grid(row=2, column=0, sticky='news')
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=0)
-        self.rowconfigure(2, weight=5)
+        # Set dimension and behavior of children
+        self.rowconfigure(0, weight=1)  # Strechable
+        self.rowconfigure(1, weight=0)  # Fixed size
+        self.rowconfigure(2, weight=5)  # Strechable and 5 times Header
         self.columnconfigure(0, weight=1)
 
     def update(self):
@@ -263,22 +283,30 @@ class Calendar_classic(tk.Frame):
 
     def prev_month(self):
         """Set first_of_month of all widgets to the previous month's"""
+        # Calculate date object of first day of the previous month
         self.last_of_previous = self.first_of_month - timedelta(1)
         self.first_of_month = date(self.last_of_previous.year,
                                    self.last_of_previous.month, 1)
+        print(self.first_of_month)
+        # Update first_of_month of children
         self.header.first_of_month = self.first_of_month
         self.table.first_of_month = self.first_of_month
+        # Update displayed stuff
         self.update()
 
     def next_month(self):
         """Set first_of_month of all widgets to the next month's"""
+        # Define variables
         year, month = self.first_of_month.year, self.first_of_month.month
-        self.first_of_next = self.first_of_month + timedelta(
-            days=calendar.monthrange(year, month)[1] + 1)
-        self.first_of_month = date(self.first_of_next.year,
-                                   self.first_of_next.month, 1)
+        days_in_month = calendar.monthrange(year, month)[1]
+        # Date object of the first day of the next month
+        self.first_of_next = (self.first_of_month +
+                              timedelta(days_in_month))
+        self.first_of_month = self.first_of_next
+        # Update first_of_month of children
         self.header.first_of_month = self.first_of_month
         self.table.first_of_month = self.first_of_month
+        # Update displayed stuff
         self.update()
 
     def bind_widgets(self):
@@ -291,10 +319,15 @@ class Home_screen(tk.Tk):
     """The Home screen of the app"""
     def __init__(self, **kw):
         tk.Tk.__init__(self, **kw)
+        # Place Calendar_classic in window
         screen = Calendar_classic(self)
         screen.grid(row=0, column=0, sticky='news')
+        # Make the calendar strechable
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
-        self.minsize(350, 500)
+        # Set default size; (self, 1, 1) to fullscreen it
         default_size = proportion_to_screen_string(self, 3, 2)
         self.geometry(default_size)
+        # Set minimum size of the window
+        min_width, min_height = proportion_to_screen_size(self, 5, 3)
+        self.minsize(min_width, min_height)
