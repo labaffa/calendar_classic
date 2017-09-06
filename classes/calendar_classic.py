@@ -325,9 +325,21 @@ class Home_screen(tk.Tk):
         # Make the calendar strechable
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
-        # Set default size; (self, 1, 1) to fullscreen it
-        default_size = proportion_to_screen_string(self, 3, 2)
+        # Set dimensions
+        self.default_size()
+        self.minimum_size()
+
+    def default_size(self, w=3, h=2):
+        """
+        Set size of the window at launch proportioned to screen's size.
+        w, h = 1,1 to launch in fullscreen mode
+        """
+        default_size = proportion_to_screen_string(self, w, h)
         self.geometry(default_size)
-        # Set minimum size of the window
-        min_width, min_height = proportion_to_screen_size(self, 5, 3)
+
+    def minimum_size(self, w=5, h=3):
+        """
+        Set minimum size of the window proportioned to screen's size
+        """
+        min_width, min_height = proportion_to_screen_size(self, w, h)
         self.minsize(min_width, min_height)
