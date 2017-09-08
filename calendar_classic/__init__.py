@@ -1,11 +1,11 @@
 import calendar
 from datetime import date, timedelta
-from settings.config import (calendar_button_conf, header_conf,
+from .settings.config import (calendar_button_conf, header_conf,
                              this_month_conf, other_month_conf,
                              today_conf, weekdays_conf, month_year_conf,
                              table_conf, date_box_conf,
                              weekday_labels_conf)
-from utils.checkers import (is_today, get_row, get_column,
+from .utils.checkers import (is_today, get_row, get_column,
                             proportion_to_screen_string,
                             proportion_to_screen_size)
 try:
@@ -343,3 +343,4 @@ class Home_screen(tk.Tk):
         """
         min_width, min_height = proportion_to_screen_size(self, w, h)
         self.minsize(min_width, min_height)
+
