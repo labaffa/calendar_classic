@@ -160,6 +160,13 @@ class Weekday_names(tk.Frame):
             self.rowconfigure(0, weight=1)
 
 
+class Date_box(tk.Label):
+    """A tk.Label with a datetime.date object attribute (def: today) """
+    def __init__(self, master=None, **kw):
+        self.date = kw.pop('date', date.today())
+        tk.Label.__init__(self, master, **kw)
+
+
 class Dates_table(tk.Frame):
     """A matrix of tk.Labels displaying days of selected month"""
     def __init__(self, master=None, **kw):
@@ -173,7 +180,7 @@ class Dates_table(tk.Frame):
         self.no_rows = 6
         self.no_cols = 7
         # Create boxes to fill with day numbers
-        self.date_boxes = [tk.Label(self)
+        self.date_boxes = [Date_box(self)
                            for _ in range(self.no_rows*self.no_cols)]
         # General frame configuration and display
         self.configure(table_conf)
@@ -209,10 +216,11 @@ class Dates_table(tk.Frame):
         for i, date_box in enumerate(self.date_boxes):
             # Shift: number of days from the first day of the month.
             # It is used to fill from the first day of the
-            # week of the first month-day.
+            # week of the first month-day
             shift = i - weekday_of_first
             current_date = self.first_of_month + timedelta(shift)
-            # Assign number and style of the box
+            # Assign date attribute, number and style of the box
+            date_box.date = current_date
             date_box.configure(date_box_conf,
                                anchor='ne',
                                text=current_date.day)
@@ -239,6 +247,7 @@ class Dates_table(tk.Frame):
         for i, date_box in enumerate(self.date_boxes):
             shift = i - weekday_of_first
             current_date = self.first_of_month + timedelta(shift)
+            date_box.date = current_date
             date_box.configure(text=current_date.day)
             self.label_config(date_box, current_date)
 
